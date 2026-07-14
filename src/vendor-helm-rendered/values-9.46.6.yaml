@@ -14,7 +14,7 @@ autoDiscovery:
   # Enable autodiscovery for `cloudProvider=clusterapi`, for groups matching `autoDiscovery.labels`.
   # Enable autodiscovery for `cloudProvider=gce`, but no MIG tagging required.
   # Enable autodiscovery for `cloudProvider=magnum`, for groups matching `autoDiscovery.roles`.
-  clusterName:  # cluster.local
+  clusterName: "${VendorClusterAutoscalerAws/ClusterName}"
 
   # autoDiscovery.namespace -- Enable autodiscovery via cluster namespace for for `cloudProvider=clusterapi`
   namespace:  # default
@@ -73,7 +73,7 @@ autoscalingGroupsnamePrefix: []
 awsAccessKeyID: ""
 
 # awsRegion -- AWS region (required if `cloudProvider=aws`)
-awsRegion: ""
+awsRegion: "${VendorClusterAutoscalerAws/AwsRegion}"
 
 # awsSecretAccessKey -- AWS access secret key ([if AWS user keys used](https://github.com/kubernetes/autoscaler/blob/master/cluster-autoscaler/cloudprovider/aws/README.md#using-aws-credentials))
 awsSecretAccessKey: ""
@@ -159,12 +159,12 @@ clusterAPIMode: incluster-incluster  # incluster-incluster, incluster-kubeconfig
 clusterAPIWorkloadKubeconfigPath: /etc/kubernetes/value
 
 # containerSecurityContext -- [Security context for container](https://kubernetes.io/docs/tasks/configure-pod-container/security-context/)
-containerSecurityContext: {}
-  # allowPrivilegeEscalation: false
-  # capabilities:
-  #   drop:
-  #   - ALL
-  # readOnlyRootFilesystem: true
+containerSecurityContext:
+  allowPrivilegeEscalation: false
+  capabilities:
+    drop:
+      - ALL
+  readOnlyRootFilesystem: true
 
 deployment:
   # deployment.annotations -- Annotations to add to the Deployment object.
@@ -192,9 +192,18 @@ expanderPriorities: {}
 # parameters and their default values.
 # Everything after the first _ will be ignored allowing the use of multi-string arguments.
 extraArgs:
-  logtostderr: true
-  stderrthreshold: info
-  v: 4
+  # null deletes the upstream default args: klog already logs to stderr by
+  # default and stderrthreshold is a no-op when it does
+  logtostderr: null
+  stderrthreshold: null
+  v: "${VendorClusterAutoscalerAws/LogVerbosity}"
+  expander: "${VendorClusterAutoscalerAws/Expander}"
+  balance-similar-node-groups: "${VendorClusterAutoscalerAws/BalanceSimilarNodeGroups}"
+  skip-nodes-with-system-pods: "${VendorClusterAutoscalerAws/SkipNodesWithSystemPods}"
+  skip-nodes-with-local-storage: "${VendorClusterAutoscalerAws/SkipNodesWithLocalStorage}"
+  scale-down-unneeded-time: "${VendorClusterAutoscalerAws/ScaleDownUnneededTime}"
+  scale-down-delay-after-add: "${VendorClusterAutoscalerAws/ScaleDownDelayAfterAdd}"
+  scan-interval: "${VendorClusterAutoscalerAws/ScanInterval}"
   # write-status-configmap: true
   # status-config-map-name: cluster-autoscaler-status
   # leader-elect: true
@@ -276,16 +285,16 @@ extraVolumeSecrets: {}
 initContainers: []
 
 # fullnameOverride -- String to fully override `cluster-autoscaler.fullname` template.
-fullnameOverride: ""
+fullnameOverride: "${ProjectName}"
 
 # hostNetwork -- Whether to expose network interfaces of the host machine to pods.
 hostNetwork: false
 
 image:
   # image.repository -- Image repository
-  repository: registry.k8s.io/autoscaling/cluster-autoscaler
+  repository: "${VendorClusterAutoscalerAws/EnvironmentDockerRegistryAndNamespace}/${DockerImageName}"
   # image.tag -- Image tag
-  tag: v1.32.0
+  tag: "${DockerTagClusterAutoscaler}"
   # image.pullPolicy -- Image pull policy
   pullPolicy: IfNotPresent
   ## Optionally specify an array of imagePullSecrets.
@@ -310,7 +319,7 @@ magnumCABundlePath: "/etc/kubernetes/ca-bundle.crt"
 magnumClusterName: ""
 
 # nameOverride -- String to partially override `cluster-autoscaler.fullname` template (will maintain the release name)
-nameOverride: ""
+nameOverride: "${ProjectName}"
 
 # nodeSelector -- Node labels for pod assignment. Ref: https://kubernetes.io/docs/user-guide/node-selection/.
 nodeSelector: {}
@@ -383,18 +392,21 @@ resources: {}
 revisionHistoryLimit: 10
 
 # securityContext -- [Security context for pod](https://kubernetes.io/docs/tasks/configure-pod-container/security-context/)
-securityContext: {}
-  # runAsNonRoot: true
-  # runAsUser: 65534
-  # runAsGroup: 65534
-  # seccompProfile:
-  #    type: RuntimeDefault
+securityContext:
+  runAsNonRoot: true
+  runAsUser: 65534
+  runAsGroup: 65534
+  seccompProfile:
+    type: RuntimeDefault
 
 service:
   # service.create -- If `true`, a Service will be created.
   create: true
   # service.annotations -- Annotations to add to service
-  annotations: {}
+  annotations:
+    prometheus.io/scrape: 'true'
+    prometheus.io/port: '8085'
+    prometheus.io/path: /metrics
   # service.labels -- Labels to add to service
   labels: {}
   # service.externalIPs -- List of IP addresses at which the service is available. Ref: https://kubernetes.io/docs/concepts/services-networking/service/#external-ips.

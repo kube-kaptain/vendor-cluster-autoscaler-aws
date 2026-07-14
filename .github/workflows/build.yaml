@@ -1,0 +1,15 @@
+name: Kubernetes App - Helm Rendered
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+
+jobs:
+  build:
+    uses: kube-kaptain/buildon-github-actions/.github/workflows/kubernetes-bundle-vendor-helm-rendered.yaml@1.1.47
+    permissions:
+      contents: write
+      packages: write
+      checks: write
