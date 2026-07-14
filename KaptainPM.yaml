@@ -56,7 +56,7 @@ spec:
               - '.spec.template.spec.containers[0].resources.limits.memory = "${VendorClusterAutoscalerAws/Memory}" | .spec.template.spec.containers[0].resources.limits.memory style="double"'
               - '.spec.template.spec.containers[0].env = ((.spec.template.spec.containers[0].env // []) + [{"name":"GOMEMLIMIT","value":"${VendorClusterAutoscalerAws/GoMemLimit}"}])'
       imageRetags:
-        - sourceImageUri: 'registry.k8s.io/autoscaling/cluster-autoscaler:v1.34.4'
+        - sourceImageUri: 'registry.k8s.io/autoscaling/cluster-autoscaler:v1.35.1'
           tagSuffix: 'cluster-autoscaler'
     hooks:
       prePackagePrepare: .github/bin/validate-version-pairing.bash
