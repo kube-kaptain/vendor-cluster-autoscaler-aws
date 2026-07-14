@@ -1,0 +1,73 @@
+apiVersion: kaptain.org/1.22
+kind: kubernetes-bundle-vendor-helm-rendered
+metadata:
+  description: "Vendored Cluster Autoscaler for AWS ASG auto-discovery"
+
+spec:
+  layers:
+    - layer-github-flow-strict:[1.3,2.0)
+  main:
+    vendorHelmRendered:
+      repoUrl: 'https://kubernetes.github.io/autoscaler'
+      chartName: 'cluster-autoscaler'
+      useProjectNameAsFullnameOverride: false
+      moveFiles:
+        - source: 'templates/serviceaccount.yaml'
+          destination: 'serviceaccount.yaml'
+        - source: 'templates/clusterrole.yaml'
+          destination: 'clusterrole.yaml'
+        - source: 'templates/clusterrolebinding.yaml'
+          destination: 'clusterrolebinding.yaml'
+        - source: 'templates/role.yaml'
+          destination: 'role.yaml'
+        - source: 'templates/rolebinding.yaml'
+          destination: 'rolebinding.yaml'
+        - source: 'templates/deployment.yaml'
+          destination: 'deployment.yaml'
+        - source: 'templates/service.yaml'
+          destination: 'service.yaml'
+        - source: 'templates/pdb.yaml'
+          destination: 'poddisruptionbudget.yaml'
+      yqTransform:
+        global:
+          - '. head_comment=""'
+          - 'with(.. | select(type == "!!map" and has("app.kubernetes.io/instance")); .["app.kubernetes.io/instance"] = "${ProjectName}")'
+        perFile:
+          - file: 'clusterrole.yaml'
+            expressions:
+              - '.metadata.name = "${Environment}." + .metadata.name'
+          - file: 'clusterrolebinding.yaml'
+            expressions:
+              - '.metadata.name = "${Environment}." + .metadata.name'
+              - '.roleRef.name = "${Environment}." + .roleRef.name'
+          - file: 'deployment.yaml'
+            expressions:
+              - '.spec.template.spec.containers[].command[] style=""'
+              - '.spec.template.spec.containers[0].livenessProbe.periodSeconds = "${VendorClusterAutoscalerAws/ProbeLivenessPeriod}" | .spec.template.spec.containers[0].livenessProbe.periodSeconds style=""'
+              - '.spec.template.spec.containers[0].livenessProbe.timeoutSeconds = "${VendorClusterAutoscalerAws/ProbeLivenessTimeoutSeconds}" | .spec.template.spec.containers[0].livenessProbe.timeoutSeconds style=""'
+              - '.spec.template.spec.containers[0].livenessProbe.failureThreshold = "${VendorClusterAutoscalerAws/ProbeLivenessFailureThreshold}" | .spec.template.spec.containers[0].livenessProbe.failureThreshold style=""'
+              - '.spec.template.spec.containers[0].startupProbe.httpGet.path = "/health-check"'
+              - '.spec.template.spec.containers[0].startupProbe.httpGet.port = 8085'
+              - '.spec.template.spec.containers[0].startupProbe.periodSeconds = "${VendorClusterAutoscalerAws/ProbeStartupPeriod}" | .spec.template.spec.containers[0].startupProbe.periodSeconds style=""'
+              - '.spec.template.spec.containers[0].startupProbe.timeoutSeconds = "${VendorClusterAutoscalerAws/ProbeStartupTimeoutSeconds}" | .spec.template.spec.containers[0].startupProbe.timeoutSeconds style=""'
+              - '.spec.template.spec.containers[0].startupProbe.failureThreshold = "${VendorClusterAutoscalerAws/ProbeStartupFailureThreshold}" | .spec.template.spec.containers[0].startupProbe.failureThreshold style=""'
+              - '.spec.template.spec.containers[0].resources.requests.cpu = "${VendorClusterAutoscalerAws/CpuRequest}" | .spec.template.spec.containers[0].resources.requests.cpu style="double"'
+              - '.spec.template.spec.containers[0].resources.requests.memory = "${VendorClusterAutoscalerAws/Memory}" | .spec.template.spec.containers[0].resources.requests.memory style="double"'
+              - '.spec.template.spec.containers[0].resources.limits.memory = "${VendorClusterAutoscalerAws/Memory}" | .spec.template.spec.containers[0].resources.limits.memory style="double"'
+              - '.spec.template.spec.containers[0].env = ((.spec.template.spec.containers[0].env // []) + [{"name":"GOMEMLIMIT","value":"${VendorClusterAutoscalerAws/GoMemLimit}"}])'
+      imageRetags:
+        - sourceImageUri: 'registry.k8s.io/autoscaling/cluster-autoscaler:v1.32.7'
+          tagSuffix: 'cluster-autoscaler'
+    hooks:
+      prePackagePrepare: .github/bin/validate-version-pairing.bash
+  global:
+    release:
+      versioning:
+        maxParts: '4'
+        strategy: file-pattern-match
+        patternType: custom
+        source:
+          subPath: '.'
+          fileName: KaptainPM.yaml
+          pattern: '^[[:space:]]*- sourceImageUri: .registry.k8s.io.autoscaling.cluster-autoscaler:v([0-9]+\.[0-9]+\.[0-9]+).$'
+          prefixParts: '3'
