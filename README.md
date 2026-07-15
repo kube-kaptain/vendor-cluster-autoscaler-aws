@@ -11,6 +11,10 @@ plain manifests in `src/kubernetes/` with no helm runtime dependency.
 This package configures the Cluster Autoscaler for **AWS** using ASG
 auto-discovery (`--node-group-auto-discovery` by cluster tag).
 
+The autoscaler needs an incoming IAM role from AWS - see the
+[Permissions](Permissions.md) doc for how to provide that and example role
+contents with a [tokenised JSON policy](Permissions.json) also available.
+
 
 ## Upstream
 
@@ -49,8 +53,8 @@ Latest chart version per application (= Kubernetes) minor:
 | 1.35                   | 9.58.0               |
 | 1.36                   | not yet released     |
 
-The currently deployed pairing is whatever `src/config/VendorAppVersion`,
-`src/config/VendorHelmRenderedVersion` and the image tag in `KaptainPM.yaml` say.
+The currently deployed pairing is whatever `src/config/VendorHelmRenderedVersion`
+and the image tag in `KaptainPM.yaml` say.
 
 
 ## Structure
