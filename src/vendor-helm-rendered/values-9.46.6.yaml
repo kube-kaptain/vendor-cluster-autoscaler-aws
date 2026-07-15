@@ -196,14 +196,42 @@ extraArgs:
   # default and stderrthreshold is a no-op when it does
   logtostderr: null
   stderrthreshold: null
-  v: "${VendorClusterAutoscalerAws/LogVerbosity}"
-  expander: "${VendorClusterAutoscalerAws/Expander}"
   balance-similar-node-groups: "${VendorClusterAutoscalerAws/BalanceSimilarNodeGroups}"
-  skip-nodes-with-system-pods: "${VendorClusterAutoscalerAws/SkipNodesWithSystemPods}"
-  skip-nodes-with-local-storage: "${VendorClusterAutoscalerAws/SkipNodesWithLocalStorage}"
-  scale-down-unneeded-time: "${VendorClusterAutoscalerAws/ScaleDownUnneededTime}"
+  expander: "${VendorClusterAutoscalerAws/Expander}"
+  expendable-pods-priority-cutoff: "${VendorClusterAutoscalerAws/ExpendablePodsPriorityCutoff}"
+  ignore-daemonsets-utilization: "${VendorClusterAutoscalerAws/IgnoreDaemonsetsUtilization}"
+  ignore-mirror-pods-utilization: "${VendorClusterAutoscalerAws/IgnoreMirrorPodsUtilization}"
+  max-drain-parallelism: "${VendorClusterAutoscalerAws/MaxDrainParallelism}"
+  max-graceful-termination-sec: "${VendorClusterAutoscalerAws/MaxGracefulTerminationSec}"
+  max-node-provision-time: "${VendorClusterAutoscalerAws/MaxNodeProvisionTime}"
+  max-nodes-total: "${VendorClusterAutoscalerAws/MaxNodesTotal}"
+  max-scale-down-parallelism: "${VendorClusterAutoscalerAws/MaxScaleDownParallelism}"
+  max-total-unready-percentage: "${VendorClusterAutoscalerAws/MaxTotalUnreadyPercentage}"
+  new-pod-scale-up-delay: "${VendorClusterAutoscalerAws/NewPodScaleUpDelay}"
+  node-delete-delay-after-taint: "${VendorClusterAutoscalerAws/NodeDeleteDelayAfterTaint}"
+  node-deletion-batcher-interval: "${VendorClusterAutoscalerAws/NodeDeletionBatcherInterval}"
+  node-deletion-delay-timeout: "${VendorClusterAutoscalerAws/NodeDeletionDelayTimeout}"
+  ok-total-unready-count: "${VendorClusterAutoscalerAws/OkTotalUnreadyCount}"
+  scale-down-candidates-pool-min-count: "${VendorClusterAutoscalerAws/ScaleDownCandidatesPoolMinCount}"
+  scale-down-candidates-pool-ratio: "${VendorClusterAutoscalerAws/ScaleDownCandidatesPoolRatio}"
   scale-down-delay-after-add: "${VendorClusterAutoscalerAws/ScaleDownDelayAfterAdd}"
+  scale-down-delay-after-delete: "${VendorClusterAutoscalerAws/ScaleDownDelayAfterDelete}"
+  scale-down-delay-after-failure: "${VendorClusterAutoscalerAws/ScaleDownDelayAfterFailure}"
+  scale-down-delay-type-local: "${VendorClusterAutoscalerAws/ScaleDownDelayTypeLocal}"
+  scale-down-enabled: "${VendorClusterAutoscalerAws/ScaleDownEnabled}"
+  scale-down-gpu-utilization-threshold: "${VendorClusterAutoscalerAws/ScaleDownGpuUtilizationThreshold}"
+  scale-down-non-empty-candidates-count: "${VendorClusterAutoscalerAws/ScaleDownNonEmptyCandidatesCount}"
+  scale-down-simulation-timeout: "${VendorClusterAutoscalerAws/ScaleDownSimulationTimeout}"
+  scale-down-unneeded-time: "${VendorClusterAutoscalerAws/ScaleDownUnneededTime}"
+  scale-down-unready-enabled: "${VendorClusterAutoscalerAws/ScaleDownUnreadyEnabled}"
+  scale-down-unready-time: "${VendorClusterAutoscalerAws/ScaleDownUnreadyTime}"
+  scale-down-utilization-threshold: "${VendorClusterAutoscalerAws/ScaleDownUtilizationThreshold}"
+  scale-up-from-zero: "${VendorClusterAutoscalerAws/ScaleUpFromZero}"
   scan-interval: "${VendorClusterAutoscalerAws/ScanInterval}"
+  skip-nodes-with-custom-controller-pods: "${VendorClusterAutoscalerAws/SkipNodesWithCustomControllerPods}"
+  skip-nodes-with-local-storage: "${VendorClusterAutoscalerAws/SkipNodesWithLocalStorage}"
+  skip-nodes-with-system-pods: "${VendorClusterAutoscalerAws/SkipNodesWithSystemPods}"
+  v: "${VendorClusterAutoscalerAws/LogVerbosity}"
   # write-status-configmap: true
   # status-config-map-name: cluster-autoscaler-status
   # leader-elect: true
@@ -368,7 +396,12 @@ rbac:
   clusterScoped: true
   serviceAccount:
     # rbac.serviceAccount.annotations -- Additional Service Account annotations.
-    annotations: {}
+    # The annotation key defaults to a decoy the EKS pod identity webhook
+    # never matches, so the whole annotation is inert under Pod Identity.
+    # To use IRSA, override the key token to eks.amazonaws.com/role-arn and
+    # set the ARN component tokens per environment.
+    annotations:
+      "${VendorClusterAutoscalerAws/IrsaAnnotationKey}": "arn:${VendorClusterAutoscalerAws/AwsArnPartition}:iam::${VendorClusterAutoscalerAws/AwsAccountId}:role/${VendorClusterAutoscalerAws/IrsaRoleName}"
     # rbac.serviceAccount.create -- If `true` and `rbac.create` is also true, a Service Account will be created.
     create: true
     # rbac.serviceAccount.name -- The name of the ServiceAccount to use. If not set and create is `true`, a name is generated using the fullname template.
