@@ -420,7 +420,12 @@ rbac:
   annotations: {}
   serviceAccount:
     # rbac.serviceAccount.annotations -- Additional Service Account annotations.
-    annotations: {}
+    # The annotation key defaults to a decoy the EKS pod identity webhook
+    # never matches, so the whole annotation is inert under Pod Identity.
+    # To use IRSA, override the key token to eks.amazonaws.com/role-arn and
+    # set the ARN component tokens per environment.
+    annotations:
+      "${VendorClusterAutoscalerAws/IrsaAnnotationKey}": "arn:${VendorClusterAutoscalerAws/AwsArnPartition}:iam::${VendorClusterAutoscalerAws/AwsAccountId}:role/${VendorClusterAutoscalerAws/IrsaRoleName}"
     # rbac.serviceAccount.create -- If `true` and `rbac.create` is also true, a Service Account will be created.
     create: true
     # rbac.serviceAccount.name -- The name of the ServiceAccount to use. If not set and create is `true`, a name is generated using the fullname template.
