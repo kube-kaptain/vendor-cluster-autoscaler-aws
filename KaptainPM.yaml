@@ -1,11 +1,11 @@
-apiVersion: kaptain.org/1.22
+apiVersion: kaptain.org/1.23
 kind: kubernetes-bundle-vendor-helm-rendered
 metadata:
   description: "Vendored Cluster Autoscaler for AWS ASG auto-discovery"
 
 spec:
   layers:
-    - layer-github-flow-strict:[1.3,2.0)
+    - layer-github-flow-strict:[1.3]
   main:
     vendorHelmRendered:
       repoUrl: 'https://kubernetes.github.io/autoscaler'
