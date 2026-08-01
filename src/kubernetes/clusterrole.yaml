@@ -3,9 +3,9 @@ kind: ClusterRole
 metadata:
   labels:
     app.kubernetes.io/instance: "${ProjectName}"
-    app.kubernetes.io/name: "${Environment}.${ProjectName}"
+    app.kubernetes.io/name: "${ProjectName}"
     app.kubernetes.io/managed-by: "Kaptain"
-    app: ${Environment}.${ProjectName}
+    app: ${ProjectName}
     app.kubernetes.io/version: "${Version}"
     app.kubernetes.io/part-of: ${ProductName}
     kaptain.org/environment: ${Environment}
